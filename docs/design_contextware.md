@@ -57,15 +57,17 @@ The system is managed via **`uv`** and runs entirely locally.
 
 ### Retrieval (RAG)
 1.  User asks: "Where do we define the data models?"
-2.  Agent calls `recall_context(query="data models", scope="codebase")`.
+2.  Agent calls `recall_context(query="data models", scope="codebase", mode="summary"|"exact")`.
 3.  The system:
     *   Searches `code_index` via vector similarity.
     *   Checks `mtime`. If stale, returns: `"[STALE] File changed recently. Please read directly."`
-    *   If fresh, returns the summary and symbol list.
+    *   **If mode="summary" (Default):** Returns the summary and symbol list.
+    *   **If mode="exact":** Concatenates all relevant files (determined by vector similarity) and outputs them.
+        *   *Constraint:* If a file is too large, the system instructs the agent to read portions of it itself.
 4.  **Agent Action:** If info is missing or stale, the agent falls back to its native `read_file` tool to get full content.
 
 ## 5. Tools (Exposed to Agent)
 
 1.  `save_memory(fact: str)`
-2.  `recall_context(query: str, scope: 'all'|'code'|'memory')`
+2.  `recall_context(query: str, scope: 'all'|'code'|'memory', mode: 'summary'|'exact')`
 3.  `index_project()`: Spawns a single custom headless worker to crawl the codebase and generate/update the vector database for all files.

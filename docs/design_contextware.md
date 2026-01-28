@@ -35,10 +35,10 @@ The system is managed via **`uv`** and runs entirely locally.
 
 ## 4. Workflows
 
-### Memory Capture (Explicit)
-1.  User states a preference or decision.
-2.  Agent calls `save_memory(fact="...")`.
-3.  Skill uses `uv run` to execute a storage script that embeds and saves to `facts`.
+### Memory Capture
+1.  **Trigger:** The agent continuously analyzes the conversation to identify important facts, user preferences, architectural decisions, or constraints that are likely to be relevant in future sessions.
+2.  **Action:** When such a fact is identified, the agent proactively executes `uv run scripts/save_fact.py "<fact>"`.
+3.  **Storage:** `save_fact.py` embeds and saves the fact to the `facts` collection.
 
 ### Codebase Indexing (Background)
 1.  Agent modifies a file (e.g., `src/app.py`).
@@ -47,17 +47,16 @@ The system is managed via **`uv`** and runs entirely locally.
 4.  Headless Gemini:
     *   Reads the file.
     *   Generates a JSON containing a `summary` and a list of `symbols`.
-    *   Writes the result to the `code_index` collection.
+    *   Writes the result to the `code_index` collection via the storage script.
 
 ### Project Crawl (Full Index)
-1.  Agent calls `index_project()`.
-2.  Skill triggers a single background process: `uv run scripts/crawl_project.py &`.
-3.  This script spawns a **single headless Gemini agent** with the goal: "Traverse the project, read all source files, and update the `code_index` for each."
-4.  The headless agent autonomously walks the directory tree, summarizing files and updating the DB as it goes.
+1.  **Action:** The agent executes `uv run scripts/crawl_project.py`.
+2.  **Process:** This script spawns a **single headless Gemini agent** with the goal: "Traverse the project, read all source files, and update the `code_index` for each."
+3.  The headless agent autonomously walks the directory tree, summarizing files and updating the DB as it goes.
 
 ### Retrieval (RAG)
 1.  User asks: "Where do we define the data models?"
-2.  Agent calls `recall_context(query="data models", scope="codebase", mode="summary"|"exact")`.
+2.  **Action:** Agent executes `uv run scripts/recall.py --query "data models" --scope "codebase" --mode "summary"|"exact"`.
 3.  The system:
     *   Searches `code_index` via vector similarity.
     *   Checks `mtime`. If stale, returns: `"[STALE] File changed recently. Please read directly."`
@@ -66,8 +65,11 @@ The system is managed via **`uv`** and runs entirely locally.
         *   *Constraint:* If a file is too large, the system instructs the agent to read portions of it itself.
 4.  **Agent Action:** If info is missing or stale, the agent falls back to its native `read_file` tool to get full content.
 
-## 5. Tools (Exposed to Agent)
+## 5. Scripts (CLI Interface)
 
-1.  `save_memory(fact: str)`
-2.  `recall_context(query: str, scope: 'all'|'code'|'memory', mode: 'summary'|'exact')`
-3.  `index_project()`: Spawns a single custom headless worker to crawl the codebase and generate/update the vector database for all files.
+The agent interacts with the Contextware skill by executing scripts via `run_shell_command`:
+
+1.  `uv run scripts/save_fact.py "<fact>"`: Saves a semantic fact or preference.
+2.  `uv run scripts/crawl_project.py`: Starts a full background codebase index.
+3.  `uv run scripts/recall.py --query "<query>" --scope "all"|"code"|"memory" --mode "summary"|"exact"`: Retrieves relevant context.
+4.  `uv run scripts/index_file.py <file_path> &`: Indexes a specific file in the background.

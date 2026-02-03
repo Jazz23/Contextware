@@ -1,7 +1,7 @@
 # Implementation Plan: Contextware Phase 1
-## Infrastructure & Code Indexing
+## Infrastructure & Semantic Memory
 
-This phase focuses on setting up the local vector database and implementing the background process that summarizes and indexes the codebase.
+This phase focuses on setting up the local vector database and implementing the mechanisms to save and recall facts and task outcomes.
 
 ### 1. Project Structure
 The project will be located in the root `skills/` directory.
@@ -12,8 +12,7 @@ skills/contextware/
 ├── pyproject.toml           # uv configuration
 ├── scripts/
 │   ├── db.py                # LanceDB connection & schema
-│   ├── storage.py           # CLI for database operations
-│   ├── crawl_project.py     # File walker & Gemini aggregator
+│   ├── store.py             # CLI for all write operations (facts, episodes, index)
 │   └── recall.py            # (Placeholder) Search logic
 └── data/                    # Vector DB storage (gitignored)
 ```
@@ -39,37 +38,18 @@ skills/contextware/
     *   `timestamp` (float).
     *   `vector` (vector): 384-dim embedding of goal + summary.
 
-#### B. Storage CLI (`scripts/save_fact.py`)
-*   **Command:** `save_fact.py --type fact|episode [--goal G] [--result R] [--category C] "<content>"`
+#### B. Storage CLI (`scripts/store.py`)
+*   **Command:** `store.py --type fact|episode|index [--goal G] [--result R] [--category C] [--path P] ["<content>"]`
 *   **Functionality:**
     1.  Generate embedding using `fastembed`.
     2.  For episodes, concatenate goal and summary for the embedding input.
     3.  Upsert record into the appropriate LanceDB table.
-
-#### C. Crawler Script (`scripts/crawl_project.py`)
-*   **Functionality:**
-    1.  Recursively walk the project directory (respecting `.gitignore`).
-    2.  Filter out large files (>100KB) and binary files.
-    3.  Concatenate content with headers: `--- FILE: <path> ---`.
-    4.  Invoke the headless Gemini agent:
-        `cat <concated_files> | gemini -p "<INDEX_PROMPT>"`
-
-### 3. Headless Agent Strategy
-The `crawl_project.py` script will use a specialized prompt to guide the headless Gemini instance:
-
-**Index Prompt:**
-> Analyze each file provided in the stream. For each:
-> 1. Generate a 1-2 sentence summary.
-> 2. Extract key symbols.
-> 3. Create a JSON: `{"path": "...", "summary": "...", "symbols": [...]}`.
-> 4. Base64 encode the JSON.
-> 5. Execute: `uv run skills/contextware/scripts/storage.py save-index --payload <BASE64>`.
+    4.  (For index) Invoke headless Gemini to summarize the file at `--path`.
 
 ### 4. Implementation Steps
 
 1.  **Environment Setup:** Initialize `uv` project in `skills/contextware/` with dependencies (`lancedb`, `fastembed`, `pydantic`, `fire`).
 2.  **DB & Schema:** Create `db.py` to handle table creation for `code_index`, `facts`, and `episodes`.
-3.  **Storage Logic:** Implement `save_fact.py` and `storage.py` (for codebase indexing) to handle vector embedding and metadata.
-4.  **Crawler Implementation:** Build the Python walker and the subprocess logic to pipe data to Gemini.
-5.  **Recall Logic:** Implement `recall.py` to search across scopes and format episodic results with their `[RESULT]` and `[CATEGORY]` markers.
-6.  **Skill Integration:** Create `SKILL.md` so the Gemini CLI knows how to trigger a full crawl and record outcomes.
+3.  **Storage Logic:** Implement `store.py` to handle vector embedding, metadata, and codebase indexing triggers.
+4.  **Recall Logic:** Implement `recall.py` to search across scopes and format episodic results with their `[RESULT]` and `[CATEGORY]` markers.
+5.  **Skill Integration:** Create `SKILL.md` so the Gemini CLI knows how to record and recall facts and outcomes.

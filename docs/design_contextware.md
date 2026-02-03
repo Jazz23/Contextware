@@ -45,22 +45,18 @@ The system is managed via **`uv`** and runs entirely locally.
 ## 4. Workflows
 
 ### Memory Capture
-1.  **Fact Capture:** The agent identifies a persistent preference or constraint and executes `uv run scripts/save_fact.py --type fact "<fact>"`.
+1.  **Fact Capture:** The agent identifies a persistent preference or constraint and executes `uv run scripts/store.py --type fact "<fact>"`.
 2.  **Episode Capture (Black Box):** When a logical task or significant command finishes, the agent records the outcome:
-    `uv run scripts/save_fact.py --type episode --goal "..." --result "success|failure" --category "..." "Summary of actions taken"`.
-3.  **Storage:** `save_fact.py` embeds the content (including metadata for episodes) and saves it to the relevant collection.
+    `uv run scripts/store.py --type episode --goal "..." --result "success|failure" --category "..." "Summary of actions taken"`.
+3.  **Storage:** `store.py` embeds the content (including metadata for episodes) and saves it to the relevant collection.
 
 ### Codebase Indexing (Background)
 1.  Agent modifies a file (e.g., `src/app.py`).
-2.  Agent triggers a background process: `uv run scripts/index_file.py src/app.py &`.
-3.  `index_file.py` spawns a **headless Gemini** instance using the `gemini` executable from PATH.
-4.  Headless Gemini:
-    *   Reads the file.
-    *   Generates a JSON containing a `summary` and a list of `symbols`.
-    *   Writes the result to the `code_index` collection via the storage script.
+2.  Agent triggers a background process: `uv run scripts/store.py --type index --path src/app.py &`.
+3.  `store.py` (when type is index) spawns a **headless Gemini** instance to summarize the file and updates the `code_index` collection.
 
 ### Project Crawl (Full Index)
-1.  **Action:** The agent executes `uv run scripts/crawl_project.py`.
+1.  **Action:** The agent executes `uv run scripts/store.py --type crawl`.
 2.  **Process:** This script spawns a **single headless Gemini agent** with the goal: "Traverse the project, read all source files, and update the `code_index` for each."
 3.  The headless agent autonomously walks the directory tree, summarizing files and updating the DB as it goes.
 
@@ -80,7 +76,5 @@ The system is managed via **`uv`** and runs entirely locally.
 
 The agent interacts with the Contextware skill by executing scripts via `run_shell_command`:
 
-1.  `uv run scripts/save_fact.py --type fact|episode [--goal G] [--result R] [--category C] "<content>"`: Saves a semantic fact or episodic outcome.
-2.  `uv run scripts/crawl_project.py`: Starts a full background codebase index.
-3.  `uv run scripts/recall.py --query "<query>" --scope "all"|"code"|"memory"|"episodes" --mode "summary"|"exact"`: Retrieves relevant context.
-4.  `uv run scripts/index_file.py <file_path> &`: Indexes a specific file in the background.
+1.  `uv run scripts/store.py --type fact|episode|index|crawl [--goal G] [--result R] [--category C] [--path P] ["<content>"]`: Saves data to the semantic memory or triggers indexing.
+2.  `uv run scripts/recall.py --query "<query>" --scope "all"|"code"|"memory"|"episodes" --mode "summary"|"exact"`: Retrieves relevant context.

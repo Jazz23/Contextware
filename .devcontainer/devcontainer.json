@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-	"name": "Code Slob Cleanup",
+	"name": "Contextware",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/python:latest",
 	"mounts": [
@@ -9,7 +9,7 @@
 	],
 	"features": {
 		"ghcr.io/devcontainers-extra/features/npm-packages:1": {
-			"packages": "@google/gemini-cli@nightly"
+			"packages": "@google/gemini-cli@preview"
 		},
 		"ghcr.io/devcontainers-extra/features/uv:1": {}
 	},

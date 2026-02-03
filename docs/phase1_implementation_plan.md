@@ -28,13 +28,23 @@ skills/contextware/
     *   `symbols` (list[string]): Extracted classes/functions.
     *   `last_modified` (float): Timestamp for staleness checks.
     *   `vector` (vector): 384-dim embedding of the summary.
+*   **Schema (`facts`):**
+    *   `content` (string): The fact.
+    *   `vector` (vector): 384-dim embedding.
+*   **Schema (`episodes`):**
+    *   `goal` (string): Objective.
+    *   `summary` (string): Actions/Lessons.
+    *   `result` (string): success/failure/partial.
+    *   `category` (string): e.g., shell, git.
+    *   `timestamp` (float).
+    *   `vector` (vector): 384-dim embedding of goal + summary.
 
-#### B. Storage CLI (`scripts/storage.py`)
-*   **Command:** `save-index --payload <BASE64_JSON>`
+#### B. Storage CLI (`scripts/save_fact.py`)
+*   **Command:** `save_fact.py --type fact|episode [--goal G] [--result R] [--category C] "<content>"`
 *   **Functionality:**
-    1.  Decode Base64 payload containing `path`, `summary`, and `symbols`.
-    2.  Generate embedding using `fastembed` (local).
-    3.  Upsert record into LanceDB.
+    1.  Generate embedding using `fastembed`.
+    2.  For episodes, concatenate goal and summary for the embedding input.
+    3.  Upsert record into the appropriate LanceDB table.
 
 #### C. Crawler Script (`scripts/crawl_project.py`)
 *   **Functionality:**
@@ -58,7 +68,8 @@ The `crawl_project.py` script will use a specialized prompt to guide the headles
 ### 4. Implementation Steps
 
 1.  **Environment Setup:** Initialize `uv` project in `skills/contextware/` with dependencies (`lancedb`, `fastembed`, `pydantic`, `fire`).
-2.  **DB & Schema:** Create `db.py` to handle table creation and connections.
-3.  **Storage Logic:** Implement `storage.py` to handle the Base64 payload and vector embedding.
+2.  **DB & Schema:** Create `db.py` to handle table creation for `code_index`, `facts`, and `episodes`.
+3.  **Storage Logic:** Implement `save_fact.py` and `storage.py` (for codebase indexing) to handle vector embedding and metadata.
 4.  **Crawler Implementation:** Build the Python walker and the subprocess logic to pipe data to Gemini.
-5.  **Skill Integration:** Create `SKILL.md` so the Gemini CLI knows how to trigger a full crawl.
+5.  **Recall Logic:** Implement `recall.py` to search across scopes and format episodic results with their `[RESULT]` and `[CATEGORY]` markers.
+6.  **Skill Integration:** Create `SKILL.md` so the Gemini CLI knows how to trigger a full crawl and record outcomes.

@@ -1,3 +1,4 @@
+- This project uses `uv`. Run all python scripts using `uv run`.
 - If you are required to read/write files and or folders relating to a "skill", read this documentation before doing so: https://geminicli.com/docs/cli/skills/ and https://agentskills.io/specification.
 - If you are instructed to write code regarding "headless mode", read this documentation first: https://geminicli.com/docs/cli/headless/.
 - **Implementation Plans:** Always place and read implementation plans in the `docs/` directory (e.g., `docs/stage1.md`). Check this directory first when starting a new stage of work.

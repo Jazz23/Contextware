@@ -1,0 +1,12 @@
+[project]
+name = "contextware"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastembed>=0.7.4",
+    "fire>=0.7.1",
+    "lancedb>=0.27.1",
+    "pydantic>=2.12.5",
+]

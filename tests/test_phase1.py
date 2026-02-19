@@ -14,7 +14,8 @@ def run_command(cmd):
 
 def main():
     # Ensure we are in the skill directory
-    skill_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    skill_dir = os.path.join(project_root, "skills", "contextware")
     os.chdir(skill_dir)
     
     # Clean up old data for testing

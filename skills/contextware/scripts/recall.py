@@ -1,6 +1,7 @@
 import fire
 import sys
 import os
+import json
 from fastembed import TextEmbedding
 import db
 
@@ -45,6 +46,23 @@ def lookup_path(path: str):
         print(f"Error during path lookup: {e}")
         return []
 
+def print_hierarchical_symbols(data, indent="  "):
+    if data.get('top_level_functions'):
+        print(f"{indent}Functions: {', '.join(data['top_level_functions'])}")
+    
+    classes_raw = data.get('classes')
+    if classes_raw:
+        try:
+            classes = json.loads(classes_raw) if isinstance(classes_raw, str) else classes_raw
+            for class_name, methods in classes.items():
+                print(f"{indent}Class {class_name}:")
+                if methods:
+                    print(f"{indent}  Methods: {', '.join(methods)}")
+                else:
+                    print(f"{indent}  (No methods)")
+        except Exception as e:
+            print(f"{indent}Error parsing classes metadata: {e}")
+
 def main(query: str = None, scope: str = "all", limit: int = 5, path: str = None):
     try:
         # If path is provided, we ignore other filters and just do a direct lookup
@@ -57,10 +75,7 @@ def main(query: str = None, scope: str = "all", limit: int = 5, path: str = None
                     is_stale = mtime > r['last_modified']
                     prefix = "[STALE] " if is_stale else ""
                     print(f"{prefix}Summary: {r['summary']}")
-                    if r.get('classes'):
-                        print(f"Classes: {', '.join(r['classes'])}")
-                    if r.get('functions'):
-                        print(f"Functions: {', '.join(r['functions'])}")
+                    print_hierarchical_symbols(r, indent="")
             else:
                 print(f"No index entry found for path: {path}")
             return
@@ -103,10 +118,7 @@ def main(query: str = None, scope: str = "all", limit: int = 5, path: str = None
                         
                         prefix = "[STALE] " if is_stale else ""
                         print(f"{prefix}{r['file_path']}: {r['summary']}")
-                        if r.get('classes'):
-                            print(f"  Classes: {', '.join(r['classes'])}")
-                        if r.get('functions'):
-                            print(f"  Functions: {', '.join(r['functions'])}")
+                        print_hierarchical_symbols(r, indent="  ")
             
     except Exception as e:
         print(f"Error: {e}")

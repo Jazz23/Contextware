@@ -25,8 +25,8 @@ class Episode(LanceModel):
 class CodeIndex(LanceModel):
     file_path: str
     summary: str
-    classes: List[str]
-    functions: List[str]
+    classes: str  # JSON string: Map of class_name -> list of member_functions
+    top_level_functions: List[str]
     last_modified: float
     vector: Vector(384)
 

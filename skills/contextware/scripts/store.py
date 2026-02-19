@@ -3,6 +3,7 @@ import sys
 import os
 import time
 import ast
+import json
 from fastembed import TextEmbedding
 import db
 
@@ -10,22 +11,28 @@ import db
 embedding_model = TextEmbedding()
 
 def extract_python_symbols(path: str):
-    """Extracts function and class names from a Python file separately."""
+    """Extracts hierarchical symbols (classes with methods and top-level functions)."""
     try:
         with open(path, "r") as f:
             tree = ast.parse(f.read())
         
-        classes = []
-        functions = []
-        for node in ast.walk(tree):
+        classes = {}
+        top_level_functions = []
+        
+        for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                functions.append(node.name)
+                top_level_functions.append(node.name)
             elif isinstance(node, ast.ClassDef):
-                classes.append(node.name)
-        return sorted(list(set(classes))), sorted(list(set(functions)))
+                methods = []
+                for subnode in node.body:
+                    if isinstance(subnode, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        methods.append(subnode.name)
+                classes[node.name] = sorted(methods)
+        
+        return classes, sorted(top_level_functions)
     except Exception as e:
         print(f"Warning: Could not extract symbols from {path}: {e}")
-        return [], []
+        return {}, []
 
 def store_fact(content: str):
     table = db.get_table("facts")
@@ -100,12 +107,12 @@ def delete_episode(query: str):
         print(f"Error deleting episode: {e}")
         sys.exit(1)
 
-def store_index(path: str, summary: str = None, classes: list = None, functions: list = None):
+def store_index(path: str, summary: str = None, classes: dict = None, top_level_functions: list = None):
     table = db.get_table("code_index")
     
     # Check if we need to migrate the table (schema change)
-    if "classes" not in table.schema.names:
-        print("Migrating code_index table to new schema...")
+    if "top_level_functions" not in table.schema.names or table.schema.field("classes").type != "string":
+        print("Migrating code_index table to new hierarchical schema (v2)...")
         conn = db.get_db()
         conn.drop_table("code_index")
         table = db.get_table("code_index")
@@ -115,21 +122,20 @@ def store_index(path: str, summary: str = None, classes: list = None, functions:
         return
 
     # Auto-extract symbols for Python files if not provided manually
-    if not classes and not functions and path.endswith(".py"):
-        classes, functions = extract_python_symbols(path)
+    if not classes and not top_level_functions and path.endswith(".py"):
+        classes, top_level_functions = extract_python_symbols(path)
 
     if summary is None:
-        # In a real scenario, this would trigger a headless Gemini call.
-        # For now, we'll just use a placeholder.
-        # Phase 2 will implement the actual headless Gemini summarization.
         summary = f"Summary for {path}"
     
     # Include symbols in the text to embed to enable semantic search of symbols
     text_to_embed = f"Summary: {summary}"
     if classes:
-        text_to_embed += f" Classes: {', '.join(classes)}"
-    if functions:
-        text_to_embed += f" Functions: {', '.join(functions)}"
+        text_to_embed += f" Classes: {', '.join(classes.keys())}"
+        for methods in classes.values():
+            text_to_embed += f" Methods: {', '.join(methods)}"
+    if top_level_functions:
+        text_to_embed += f" Functions: {', '.join(top_level_functions)}"
 
     embeddings = list(embedding_model.embed([text_to_embed]))
     vector = embeddings[0].tolist()
@@ -139,8 +145,8 @@ def store_index(path: str, summary: str = None, classes: list = None, functions:
     data = [{
         "file_path": os.path.abspath(path),
         "summary": summary,
-        "classes": classes if classes is not None else [],
-        "functions": functions if functions is not None else [],
+        "classes": json.dumps(classes if classes is not None else {}),
+        "top_level_functions": top_level_functions if top_level_functions is not None else [],
         "last_modified": mtime,
         "vector": vector
     }]
@@ -166,7 +172,7 @@ def delete_index(path: str):
         print(f"Error deleting index: {e}")
         sys.exit(1)
 
-def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None, symbols: str = None, classes: str = None, functions: str = None, delete: bool = False):
+def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None, classes: str = None, functions: str = None, delete: bool = False):
     try:
         if type == "fact":
             if not content:
@@ -177,11 +183,9 @@ def main(type: str, content: str = None, goal: str = None, result: str = None, c
             else:
                 store_fact(content)
         elif type == "episode":
-            # For episodes, if content is provided as positional, use it as summary
             summary = content
             if delete:
                 if not goal:
-                    # If only summary (content) is provided, use it as query
                     if summary:
                         delete_episode(summary)
                     else:
@@ -196,7 +200,6 @@ def main(type: str, content: str = None, goal: str = None, result: str = None, c
                 store_episode(goal, result, category, summary)
         elif type == "index":
             if not path:
-                # If path is not provided but content is, use content as path
                 if content:
                     path = content
                 else:
@@ -207,18 +210,12 @@ def main(type: str, content: str = None, goal: str = None, result: str = None, c
                 delete_index(path)
             else:
                 summary_to_use = content if content != path else None
-                # Parse classes/functions from comma-separated strings
-                class_list = [c.strip() for c in classes.split(",")] if classes else None
+                
+                # For manual entry, classes should be a JSON string like '{"MyClass": ["method1"]}'
+                class_dict = json.loads(classes) if classes else None
                 func_list = [f.strip() for f in functions.split(",")] if functions else None
                 
-                # Legacy support for --symbols flag (assigns to functions)
-                if symbols and not func_list:
-                    if isinstance(symbols, str):
-                        func_list = [s.strip() for s in symbols.split(",")]
-                    elif isinstance(symbols, (list, tuple)):
-                        func_list = list(symbols)
-                
-                store_index(path, summary=summary_to_use, classes=class_list, functions=func_list)
+                store_index(path, summary=summary_to_use, classes=class_dict, top_level_functions=func_list)
         else:
             print(f"Unknown type: {type}")
             sys.exit(1)

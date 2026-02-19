@@ -11,6 +11,7 @@ DB_PATH = os.path.join(ROOT_DIR, "data", "contextware_db")
 
 class Fact(LanceModel):
     content: str
+    timestamp: float = Field(default_factory=time.time)
     vector: Vector(384)
 
 class Episode(LanceModel):

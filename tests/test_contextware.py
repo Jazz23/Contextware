@@ -140,8 +140,46 @@ def test_integration(skill_dir, temp_dir):
     print("Output:", output)
     if "Classes: MyClass" not in output or "Functions: function_two" not in output:
         raise Exception("Automatic separated symbol extraction failed")
-    # Note: method_one is inside MyClass, AST walk finds it as function. 
-    # Current implementation finds all functions in the file.
+
+    # 10. Deletion
+    print("\n--- Test 10: Deletion ---")
+    
+    # 10.1 Delete Fact
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "fact", "--content", "Integration Test Fact", "--delete"])
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Integration Test", "--scope", "memory"])
+    if "Integration Test Fact" in output:
+        raise Exception("Failed to delete fact")
+        
+    # 10.2 Delete Episode
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "episode", "--content", "Test Goal", "--delete"])
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Test Goal", "--scope", "episodes"])
+    if "Test Goal" in output:
+        raise Exception("Failed to delete episode")
+        
+    # 10.3 Delete Index
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "index", "--path", target_file, "--delete"])
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--path", target_file])
+    if "No index entry found" not in output:
+        raise Exception("Failed to delete index entry")
+
+    # 11. Selective Deletion (Delete just the first match)
+    print("\n--- Test 11: Selective Deletion ---")
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "fact", "--content", "Selective Match 1"])
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "fact", "--content", "Selective Match 2"])
+    
+    # Delete first match
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "fact", "--content", "Selective Match", "--delete"])
+    
+    # Check that one still exists
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Selective Match", "--scope", "memory"])
+    if "Selective Match" not in output:
+        raise Exception("Deleted all matches instead of just the first one")
+    
+    # Delete the second one
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "fact", "--content", "Selective Match", "--delete"])
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Selective Match", "--scope", "memory"])
+    if "--- Facts ---" in output and "Selective Match" in output:
+         raise Exception("Failed to delete the second match")
 
     print("\nAll integration tests passed!")
 

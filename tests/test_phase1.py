@@ -37,10 +37,6 @@ def main():
     run_command(["uv", "run", "scripts/store.py", "--type", "index", "--path", test_file])
     run_command(["uv", "run", "scripts/recall.py", "--query", "contextware documentation", "--scope", "code"])
 
-    print("\n--- Testing Crawl ---")
-    run_command(["uv", "run", "scripts/store.py", "--type", "crawl", "--path", "."])
-    run_command(["uv", "run", "scripts/recall.py", "--query", "store script", "--scope", "code"])
-
     print("\n--- Testing Exact Mode ---")
     run_command(["uv", "run", "scripts/recall.py", "--query", "db connection", "--scope", "code", "--mode", "exact", "--limit", "1"])
 

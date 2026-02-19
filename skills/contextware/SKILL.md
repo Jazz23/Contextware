@@ -28,13 +28,6 @@ Use the following commands via `run_shell_command`. **ALWAYS** execute these fro
   uv run scripts/recall.py --query "<query>" [--scope "all|memory|episodes|code"] [--limit 5] [--mode "summary|exact"]
   ```
 
-### Maintenance
-
-- **Crawl:** Re-index the entire project (crawls `.py`, `.md`, `.ts`, `.js`, `.json` files).
-  ```bash
-  uv run scripts/store.py --type crawl [--path <dir_path>]
-  ```
-
 ## Strategy & Best Practices
 
 1.  **Capture Facts:** When a user specifies a preference (e.g., "Always use functional components") or you discover a hard constraint, save it immediately as a **fact**.

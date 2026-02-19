@@ -55,11 +55,6 @@ The system is managed via **`uv`** and runs entirely locally.
 2.  Agent triggers a background process: `uv run scripts/store.py --type index --path src/app.py &`.
 3.  `store.py` (when type is index) spawns a **headless Gemini** instance to summarize the file and updates the `code_index` collection.
 
-### Project Crawl (Full Index)
-1.  **Action:** The agent executes `uv run scripts/store.py --type crawl`.
-2.  **Process:** This script spawns a **single headless Gemini agent** with the goal: "Traverse the project, read all source files, and update the `code_index` for each."
-3.  The headless agent autonomously walks the directory tree, summarizing files and updating the DB as it goes.
-
 ### Retrieval (RAG)
 1.  User asks: "Where do we define the data models?" or agent checks: "Have I tried this fix before?"
 2.  **Action:** Agent executes `uv run scripts/recall.py --query "..." --scope "all"|"code"|"memory"|"episodes"`.
@@ -76,5 +71,5 @@ The system is managed via **`uv`** and runs entirely locally.
 
 The agent interacts with the Contextware skill by executing scripts via `run_shell_command`:
 
-1.  `uv run scripts/store.py --type fact|episode|index|crawl [--goal G] [--result R] [--category C] [--path P] ["<content>"]`: Saves data to the semantic memory or triggers indexing.
+1.  `uv run scripts/store.py --type fact|episode|index [--goal G] [--result R] [--category C] [--path P] ["<content>"]`: Saves data to the semantic memory or triggers indexing.
 2.  `uv run scripts/recall.py --query "<query>" --scope "all"|"code"|"memory"|"episodes" --mode "summary"|"exact"`: Retrieves relevant context.

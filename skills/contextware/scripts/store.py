@@ -70,23 +70,6 @@ def store_index(path: str, summary: str = None, symbols: list = None):
     table.add(data)
     print(f"Indexed: {path}")
 
-def crawl(dir_path: str = "."):
-    # Placeholder for full crawl
-    # In Phase 2, this will spawn a headless agent.
-    print(f"Crawling {dir_path}...")
-    for root, dirs, files in os.walk(dir_path):
-        if ".git" in dirs:
-            dirs.remove(".git")
-        if ".venv" in dirs:
-            dirs.remove(".venv")
-        if "data" in dirs: # Skip our own data
-            dirs.remove("data")
-            
-        for file in files:
-            if file.endswith((".py", ".md", ".ts", ".js", ".json")):
-                path = os.path.join(root, file)
-                store_index(path)
-
 def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None):
     try:
         if type == "fact":
@@ -112,8 +95,6 @@ def main(type: str, content: str = None, goal: str = None, result: str = None, c
                     print("Error: path is required for type 'index'")
                     sys.exit(1)
             store_index(path, summary=summary_to_use)
-        elif type == "crawl":
-            crawl(path or content or ".")
         else:
             print(f"Unknown type: {type}")
             sys.exit(1)

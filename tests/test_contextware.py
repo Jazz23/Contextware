@@ -95,21 +95,6 @@ def test_integration(skill_dir, temp_dir):
     print("Output:", output)
     if target_file not in output:
         raise Exception(f"Failed to find indexed file: {target_file}")
-        
-    # 7. Crawl
-    print("\n--- Test 7: Crawl ---")
-    # Crawl the temp_dir.
-    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "crawl", "--path", os.path.abspath(temp_dir)])
-    
-    # 8. Search Content from Crawl
-    print("\n--- Test 8: Search Crawled Content ---")
-    # In store.py, if summary is None (which it is for crawl), it uses a placeholder "Summary for {path}".
-    # Let's search for "Summary for" and the filename
-    target_readme = os.path.abspath(os.path.join(temp_dir, "README.md"))
-    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "README", "--scope", "code"])
-    print("Output:", output)
-    if target_readme not in output:
-        raise Exception("Failed to find crawled README")
 
     print("\nAll integration tests passed!")
 

@@ -181,6 +181,23 @@ def test_integration(skill_dir, temp_dir):
     if "--- Facts ---" in output and "Selective Match" in output:
          raise Exception("Failed to delete the second match")
 
+    # 12. Semantic Search of Symbols
+    print("\n--- Test 12: Semantic Search of Symbols ---")
+    # Re-index main.py to use new embedding strategy
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "index", "--path", target_file, "--content", "Main entry point"])
+    
+    # Search for a class name
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Greeter class", "--scope", "code"])
+    print("Output (Class Search):", output)
+    if "main.py" not in output or "Classes: Greeter" not in output:
+        raise Exception("Failed to find file via class name semantic search")
+        
+    # Search for a function name
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "hello function", "--scope", "code"])
+    print("Output (Function Search):", output)
+    if "main.py" not in output or "Functions: greet, hello" not in output:
+        raise Exception("Failed to find file via function name semantic search")
+
     print("\nAll integration tests passed!")
 
 def main():

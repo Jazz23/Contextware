@@ -124,7 +124,14 @@ def store_index(path: str, summary: str = None, classes: list = None, functions:
         # Phase 2 will implement the actual headless Gemini summarization.
         summary = f"Summary for {path}"
     
-    embeddings = list(embedding_model.embed([summary]))
+    # Include symbols in the text to embed to enable semantic search of symbols
+    text_to_embed = f"Summary: {summary}"
+    if classes:
+        text_to_embed += f" Classes: {', '.join(classes)}"
+    if functions:
+        text_to_embed += f" Functions: {', '.join(functions)}"
+
+    embeddings = list(embedding_model.embed([text_to_embed]))
     vector = embeddings[0].tolist()
     
     mtime = os.path.getmtime(path)

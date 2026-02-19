@@ -2,11 +2,30 @@ import fire
 import sys
 import os
 import time
+import ast
 from fastembed import TextEmbedding
 import db
 
 # Initialize embedding model
 embedding_model = TextEmbedding()
+
+def extract_python_symbols(path: str):
+    """Extracts function and class names from a Python file separately."""
+    try:
+        with open(path, "r") as f:
+            tree = ast.parse(f.read())
+        
+        classes = []
+        functions = []
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                functions.append(node.name)
+            elif isinstance(node, ast.ClassDef):
+                classes.append(node.name)
+        return sorted(list(set(classes))), sorted(list(set(functions)))
+    except Exception as e:
+        print(f"Warning: Could not extract symbols from {path}: {e}")
+        return [], []
 
 def store_fact(content: str):
     table = db.get_table("facts")
@@ -33,19 +52,29 @@ def store_episode(goal: str, result: str, category: str, summary: str):
     }])
     print(f"Stored episode: {goal} -> {result}")
 
-def store_index(path: str, summary: str = None, symbols: list = None):
+def store_index(path: str, summary: str = None, classes: list = None, functions: list = None):
     table = db.get_table("code_index")
+    
+    # Check if we need to migrate the table (schema change)
+    if "classes" not in table.schema.names:
+        print("Migrating code_index table to new schema...")
+        conn = db.get_db()
+        conn.drop_table("code_index")
+        table = db.get_table("code_index")
     
     if not os.path.exists(path):
         print(f"Error: Path {path} does not exist.")
         return
+
+    # Auto-extract symbols for Python files if not provided manually
+    if not classes and not functions and path.endswith(".py"):
+        classes, functions = extract_python_symbols(path)
 
     if summary is None:
         # In a real scenario, this would trigger a headless Gemini call.
         # For now, we'll just use a placeholder.
         # Phase 2 will implement the actual headless Gemini summarization.
         summary = f"Summary for {path}"
-        symbols = []
     
     embeddings = list(embedding_model.embed([summary]))
     vector = embeddings[0].tolist()
@@ -55,7 +84,8 @@ def store_index(path: str, summary: str = None, symbols: list = None):
     data = [{
         "file_path": os.path.abspath(path),
         "summary": summary,
-        "symbols": symbols if symbols is not None else [],
+        "classes": classes if classes is not None else [],
+        "functions": functions if functions is not None else [],
         "last_modified": mtime,
         "vector": vector
     }]
@@ -70,7 +100,7 @@ def store_index(path: str, summary: str = None, symbols: list = None):
     table.add(data)
     print(f"Indexed: {path}")
 
-def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None):
+def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None, symbols: str = None, classes: str = None, functions: str = None):
     try:
         if type == "fact":
             if not content:
@@ -94,7 +124,19 @@ def main(type: str, content: str = None, goal: str = None, result: str = None, c
                 else:
                     print("Error: path is required for type 'index'")
                     sys.exit(1)
-            store_index(path, summary=summary_to_use)
+            
+            # Parse classes/functions from comma-separated strings
+            class_list = [c.strip() for c in classes.split(",")] if classes else None
+            func_list = [f.strip() for f in functions.split(",")] if functions else None
+            
+            # Legacy support for --symbols flag (assigns to functions)
+            if symbols and not func_list:
+                if isinstance(symbols, str):
+                    func_list = [s.strip() for s in symbols.split(",")]
+                elif isinstance(symbols, (list, tuple)):
+                    func_list = list(symbols)
+                
+            store_index(path, summary=summary_to_use, classes=class_list, functions=func_list)
         else:
             print(f"Unknown type: {type}")
             sys.exit(1)

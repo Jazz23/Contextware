@@ -95,6 +95,53 @@ def test_integration(skill_dir, temp_dir):
     print("Output:", output)
     if target_file not in output:
         raise Exception(f"Failed to find indexed file: {target_file}")
+    if "  Classes: Greeter" not in output or "  Functions: greet, hello" not in output:
+        raise Exception("Failed to display separated classes and functions in search results")
+
+    # 7. Lookup by Path
+    print("\n--- Test 7: Lookup Path ---")
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--path", target_file])
+    print("Output:", output)
+    if "Main entry point" not in output:
+        raise Exception("Failed to find summary for file path")
+    if "Classes: Greeter" not in output or "Functions: greet, hello" not in output:
+        raise Exception("Failed to display separated classes and functions in path lookup")
+
+    # 8. Index with Manual Classes/Functions
+    print("\n--- Test 8: Index with Manual Classes/Functions ---")
+    manual_file = os.path.abspath(os.path.join(temp_dir, "manual.py"))
+    with open(manual_file, "w") as f:
+        f.write("# Dummy file")
+    
+    run_command(skill_dir, [
+        "uv", "run", "scripts/store.py", 
+        "--type", "index", 
+        "--path", manual_file, 
+        "--content", "Manual content",
+        "--classes", "ManualClass",
+        "--functions", "manual_func"
+    ])
+    
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--path", manual_file])
+    print("Output:", output)
+    if "Classes: ManualClass" not in output or "Functions: manual_func" not in output:
+        raise Exception("Failed to retrieve manual classes and functions")
+
+    # 9. Automatic Symbol Extraction (Separated)
+    print("\n--- Test 9: Automatic Symbol Extraction (Separated) ---")
+    auto_symbol_file = os.path.abspath(os.path.join(temp_dir, "auto_symbols.py"))
+    with open(auto_symbol_file, "w") as f:
+        f.write("class MyClass:\n    def method_one(self): pass\n\ndef function_two(): pass")
+    
+    # Index without providing symbols manually
+    run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "index", "--path", auto_symbol_file])
+    
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--path", auto_symbol_file])
+    print("Output:", output)
+    if "Classes: MyClass" not in output or "Functions: function_two" not in output:
+        raise Exception("Automatic separated symbol extraction failed")
+    # Note: method_one is inside MyClass, AST walk finds it as function. 
+    # Current implementation finds all functions in the file.
 
     print("\nAll integration tests passed!")
 

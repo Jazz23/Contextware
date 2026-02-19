@@ -24,13 +24,19 @@ class Episode(LanceModel):
 class CodeIndex(LanceModel):
     file_path: str
     summary: str
-    symbols: List[str]
+    classes: List[str]
+    functions: List[str]
     last_modified: float
     vector: Vector(384)
 
+_db_connection = None
+
 def get_db():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    return lancedb.connect(DB_PATH)
+    global _db_connection
+    if _db_connection is None:
+        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+        _db_connection = lancedb.connect(DB_PATH)
+    return _db_connection
 
 def get_table(name: str, schema=None):
     db = get_db()

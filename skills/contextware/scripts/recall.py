@@ -34,8 +34,41 @@ def search_code(query: str, limit: int = 5):
     except Exception:
         return []
 
-def main(query: str, scope: str = "all", limit: int = 5, mode: str = "summary"):
+def lookup_path(path: str):
     try:
+        table = db.get_table("code_index")
+        abs_path = os.path.abspath(path)
+        escaped_path = abs_path.replace("'", "''")
+        results = table.search().where(f"file_path = '{escaped_path}'").to_list()
+        return results
+    except Exception as e:
+        print(f"Error during path lookup: {e}")
+        return []
+
+def main(query: str = None, scope: str = "all", limit: int = 5, path: str = None):
+    try:
+        # If path is provided, we ignore other filters and just do a direct lookup
+        if path:
+            results = lookup_path(path)
+            if results:
+                print(f"\n--- Metadata for {path} ---")
+                for r in results:
+                    mtime = os.path.getmtime(r['file_path']) if os.path.exists(r['file_path']) else 0
+                    is_stale = mtime > r['last_modified']
+                    prefix = "[STALE] " if is_stale else ""
+                    print(f"{prefix}Summary: {r['summary']}")
+                    if r.get('classes'):
+                        print(f"Classes: {', '.join(r['classes'])}")
+                    if r.get('functions'):
+                        print(f"Functions: {', '.join(r['functions'])}")
+            else:
+                print(f"No index entry found for path: {path}")
+            return
+
+        if not query:
+            print("Error: query is required unless --path is provided")
+            sys.exit(1)
+
         if scope == "all":
             scopes = ["memory", "episodes", "code"]
         elif scope == "fact" or scope == "memory":
@@ -69,17 +102,11 @@ def main(query: str, scope: str = "all", limit: int = 5, mode: str = "summary"):
                             is_stale = False
                         
                         prefix = "[STALE] " if is_stale else ""
-                        if mode == "exact":
-                            print(f"\n--- {prefix}{r['file_path']} ---")
-                            if os.path.exists(r['file_path']):
-                                with open(r['file_path'], 'r') as f:
-                                    print(f.read())
-                            else:
-                                print("File not found.")
-                        else:
-                            print(f"{prefix}{r['file_path']}: {r['summary']}")
-                            if r['symbols']:
-                                print(f"  Symbols: {', '.join(r['symbols'])}")
+                        print(f"{prefix}{r['file_path']}: {r['summary']}")
+                        if r.get('classes'):
+                            print(f"  Classes: {', '.join(r['classes'])}")
+                        if r.get('functions'):
+                            print(f"  Functions: {', '.join(r['functions'])}")
             
     except Exception as e:
         print(f"Error: {e}")

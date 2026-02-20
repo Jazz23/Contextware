@@ -92,9 +92,9 @@ def test_integration(skill_dir, temp_dir):
     print("Output:", output)
     if target_file not in output:
         raise Exception(f"Failed to find indexed file: {target_file}")
-    if "  Functions: another_func, top_level_func" not in output:
+    if "  Functions: main, top_level_func" not in output:
         raise Exception("Failed to display top-level functions")
-    if "  Class Greeter:" not in output or "    Methods: greet, hello" not in output:
+    if "  Class Processor:" not in output or "    Methods: __init__, log, process_all, process_item" not in output:
         raise Exception("Failed to display class methods hierarchical")
 
     # 7. Lookup by Path
@@ -103,7 +103,7 @@ def test_integration(skill_dir, temp_dir):
     print("Output:", output)
     if "Main entry point" not in output:
         raise Exception("Failed to find summary for file path")
-    if "Class Greeter:" not in output or "  Methods: greet, hello" not in output:
+    if "Class Processor:" not in output or "  Methods: __init__, log, process_all, process_item" not in output:
         raise Exception("Failed to display hierarchical symbols in path lookup")
 
     # 10. Deletion
@@ -147,19 +147,19 @@ def test_integration(skill_dir, temp_dir):
     print("\n--- Test 12: Semantic Search of Symbols ---")
     run_command(skill_dir, ["uv", "run", "scripts/store.py", "--type", "index", "--path", target_file, "--content", "Main entry point"])
     
-    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Greeter class", "--scope", "code"])
-    if "main.py" not in output or "Class Greeter" not in output:
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "Processor class", "--scope", "code"])
+    if "main.py" not in output or "Class Processor" not in output:
         raise Exception("Failed to find file via class name semantic search")
         
-    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "hello function", "--scope", "code"])
-    if "main.py" not in output or "greet, hello" not in output:
+    output = run_command(skill_dir, ["uv", "run", "scripts/recall.py", "--query", "log function", "--scope", "code"])
+    if "main.py" not in output or "log, process_all" not in output:
         raise Exception("Failed to find file via function name semantic search")
 
     print("\nAll integration tests passed!")
 
 def main():
-    parser = argparse.ArgumentParser(description="Test Contextware Skill")
-    parser.add_argument("--setup-only", action="store_true", help="Only set up the test environment, do not run tests")
+    parser = argparse.ArgumentParser(description="E2E Test Environment for Contextware Skill")
+    parser.add_argument("--test", action="store_true", help="Run integration tests after setup")
     args = parser.parse_args()
     
     project_root = os.getcwd()
@@ -168,11 +168,14 @@ def main():
     try:
         skill_dir = setup_test_env(project_root, temp_dir)
         
-        if not args.setup_only:
+        if args.test:
             test_integration(skill_dir, temp_dir)
+        else:
+            print("\nSetup complete. Skill directory is:", skill_dir)
+            print("Run with --test to execute integration tests.")
             
     except Exception as e:
-        print(f"\nTest failed: {e}")
+        print(f"\nFailed: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

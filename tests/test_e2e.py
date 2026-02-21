@@ -14,7 +14,7 @@ def setup_test_env(project_root, temp_dir):
     os.makedirs(temp_dir)
     
     # Copy test codebase
-    test_codebase_src = os.path.join(project_root, "codebases", "test_codebase")
+    test_codebase_src = os.path.join(project_root, "codebases", "data_processor")
     for item in os.listdir(test_codebase_src):
         s = os.path.join(test_codebase_src, item)
         d = os.path.join(temp_dir, item)

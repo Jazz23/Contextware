@@ -30,8 +30,8 @@ def top_level_func():
     print("Top level function called.")
 
 def main():
-    """Main entry point for the test codebase application."""
-    print("--- Starting Application ---")
+    """Main entry point for the data processor utility."""
+    print("--- Data Processor Initialization ---")
     
     # Run the top-level helper
     top_level_func()
@@ -42,12 +42,12 @@ def main():
     
     results = processor.process_all(items)
     
-    print("\nFinal Output Results:")
+    print("\nFinal Processing Results:")
     for res in results:
         print(f"  - {res}")
         
     print(f"\nFinal status of '{processor.name}': {processor.processed_count} items handled.")
-    print("--- Application Finished ---")
+    print("--- Data Processor Finished ---")
 
 if __name__ == "__main__":
     main()

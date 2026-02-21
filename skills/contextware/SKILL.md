@@ -3,6 +3,10 @@ name: contextware
 description: Persistent, semantic memory for software development. Remembers project decisions, user preferences, and high-level code purpose. Designed for coding agents to RAG from the codebase and past sessions to provide context-aware assistance. Use with every prompt.
 ---
 
+## Constraints
+
+Do not read or modify any files in the `skills/contextware` folder except for ones you've been explicitly instructed to.
+
 ## Load the Spec
 
 Read the file `references/spec.md` to understand the full syntax of the database. All commands must be executed in the `contextware` folder.

@@ -4,14 +4,28 @@ import os
 import json
 from fastembed import TextEmbedding
 import db
+import atexit
+import gc
+
+def _cleanup():
+    db.close_db()
+    gc.collect()
+
+atexit.register(_cleanup)
 
 # Initialize embedding model
-embedding_model = TextEmbedding()
+_embedding_model = None
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        _embedding_model = TextEmbedding()
+    return _embedding_model
 
 def search_facts(query: str, limit: int = 5):
     try:
         table = db.get_table("facts")
-        embeddings = list(embedding_model.embed([query]))
+        embeddings = list(get_embedding_model().embed([query]))
         vector = embeddings[0].tolist()
         return table.search(vector).limit(limit).to_list()
     except Exception:
@@ -20,7 +34,7 @@ def search_facts(query: str, limit: int = 5):
 def search_episodes(query: str, limit: int = 5):
     try:
         table = db.get_table("episodes")
-        embeddings = list(embedding_model.embed([query]))
+        embeddings = list(get_embedding_model().embed([query]))
         vector = embeddings[0].tolist()
         return table.search(vector).limit(limit).to_list()
     except Exception:
@@ -29,7 +43,7 @@ def search_episodes(query: str, limit: int = 5):
 def search_code(query: str, limit: int = 5):
     try:
         table = db.get_table("code_index")
-        embeddings = list(embedding_model.embed([query]))
+        embeddings = list(get_embedding_model().embed([query]))
         vector = embeddings[0].tolist()
         return table.search(vector).limit(limit).to_list()
     except Exception:

@@ -39,6 +39,15 @@ def get_db():
         _db_connection = lancedb.connect(DB_PATH)
     return _db_connection
 
+def close_db():
+    global _db_connection
+    if _db_connection is not None:
+        try:
+            _db_connection.close()
+        except Exception:
+            pass
+        _db_connection = None
+
 def get_table(name: str, schema=None):
     db = get_db()
     if name in db.table_names():

@@ -6,9 +6,26 @@ import ast
 import json
 from fastembed import TextEmbedding
 import db
+import atexit
+import gc
 
 # Initialize embedding model
-embedding_model = TextEmbedding()
+_embedding_model = None
+
+def _cleanup():
+    global _embedding_model
+    if _embedding_model is not None:
+        del _embedding_model
+    db.close_db()
+    gc.collect()
+
+atexit.register(_cleanup)
+
+def get_embedding_model():
+    global _embedding_model
+    if _embedding_model is None:
+        _embedding_model = TextEmbedding()
+    return _embedding_model
 
 def extract_python_symbols(path: str):
     """Extracts hierarchical symbols (classes with methods and top-level functions)."""
@@ -43,7 +60,7 @@ def store_fact(content: str):
         conn.drop_table("facts")
         table = db.get_table("facts")
 
-    embeddings = list(embedding_model.embed([content]))
+    embeddings = list(get_embedding_model().embed([content]))
     vector = embeddings[0].tolist()
     
     table.add([{
@@ -76,7 +93,7 @@ def store_episode(goal: str, result: str, category: str, summary: str):
     table = db.get_table("episodes")
     # For episodes, embed goal + summary
     text_to_embed = f"Goal: {goal}\nSummary: {summary}"
-    embeddings = list(embedding_model.embed([text_to_embed]))
+    embeddings = list(get_embedding_model().embed([text_to_embed]))
     vector = embeddings[0].tolist()
     
     table.add([{
@@ -137,7 +154,7 @@ def store_index(path: str, summary: str = None, classes: dict = None, top_level_
     if top_level_functions:
         text_to_embed += f" Functions: {', '.join(top_level_functions)}"
 
-    embeddings = list(embedding_model.embed([text_to_embed]))
+    embeddings = list(get_embedding_model().embed([text_to_embed]))
     vector = embeddings[0].tolist()
     
     mtime = os.path.getmtime(path)

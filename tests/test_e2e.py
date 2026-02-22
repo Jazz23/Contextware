@@ -5,7 +5,7 @@ import sys
 import argparse
 import time
 
-def setup_test_env(project_root, temp_dir):
+def setup_test_env(project_root, temp_dir, codebase_src):
     print(f"Setting up test environment in {temp_dir}...")
     
     # Clean up existing temp dir
@@ -14,7 +14,10 @@ def setup_test_env(project_root, temp_dir):
     os.makedirs(temp_dir)
     
     # Copy test codebase
-    test_codebase_src = os.path.join(project_root, "codebases", "data_processor")
+    test_codebase_src = os.path.abspath(codebase_src)
+    if not os.path.exists(test_codebase_src):
+        raise Exception(f"Codebase source path does not exist: {test_codebase_src}")
+
     for item in os.listdir(test_codebase_src):
         s = os.path.join(test_codebase_src, item)
         d = os.path.join(temp_dir, item)
@@ -159,6 +162,7 @@ def test_integration(skill_dir, temp_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="E2E Test Environment for Contextware Skill")
+    parser.add_argument("codebase_path", help="Path to the codebase to copy to the temp folder")
     parser.add_argument("--test", action="store_true", help="Run integration tests after setup")
     args = parser.parse_args()
     
@@ -166,7 +170,7 @@ def main():
     temp_dir = os.path.join(project_root, ".temp")
     
     try:
-        skill_dir = setup_test_env(project_root, temp_dir)
+        skill_dir = setup_test_env(project_root, temp_dir, args.codebase_path)
         
         if args.test:
             test_integration(skill_dir, temp_dir)

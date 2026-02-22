@@ -46,7 +46,7 @@ The `store.py` script is used to add or remove information from the Contextware 
     ```bash
     uv run skills/contextware/scripts/store.py --type index --path "path/to/file.py" [--content "Optional summary"]
     ```
-    Indexes a file. For Python files, it automatically extracts classes, methods, and top-level functions.
+    Indexes a file. For Python files, it automatically extracts classes, methods, and top-level functions. Always provide a summary.
 
 *   **Index a File (Manual symbols)**
     ```bash

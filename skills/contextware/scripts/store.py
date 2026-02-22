@@ -191,6 +191,12 @@ def delete_index(path: str):
 
 def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None, classes: str = None, functions: str = None, delete: bool = False):
     try:
+        # If content is not provided as an argument, check for piped input from stdin
+        if content is None and not sys.stdin.isatty():
+            stdin_content = sys.stdin.read().strip()
+            if stdin_content:
+                content = stdin_content
+
         if type == "fact":
             if not content:
                 print("Error: content is required for type 'fact'")

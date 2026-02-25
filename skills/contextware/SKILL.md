@@ -11,7 +11,9 @@ description: Persistent, semantic memory for software development. Remembers pro
 
 - Do not index the codebase once this skill is loaded. Only index files as needed.
 
-- Execute all commands in the `.gemini/skills/contextware` folder.
+- Execute all commands in the `.gemini/skills/contextware` folder. This means the root of the project will be "../../../". For example, if trying to index `main.py` located at the root, the path argument should be `--path "../../../main.py"`.
+
+- Do not do anything after activating this skill and loading the spec. Do not search for existing facts/episodes or anything. Wait for explicit instructions.
 
 ## Load the Spec
 
@@ -23,10 +25,12 @@ Read the file `references/spec.md` to understand the full syntax of the database
 
 2.  **Record Outcomes:** After completing a non-trivial task (fixing a bug, implementing a feature), record an **episode**. This helps in future sessions to understand *why* certain decisions were made.
 
+3. **Index Files:** When you need to understand a file, first check if it's indexed using `recall`. If the file is not in the database, or it comes up as [STALE], read the file yourself, extract relevant information/come up with a detailed summary, and store it in the database with `scripts/store.py`. For Python files, use automatic symbol extraction; for other languages, provide symbols manually. You should also re-index files you have modified yourself.
+
 ## Recall Instructions
 
-3.  **Episode Recovery** When required to perform or discuss a complicated task, first run a `recall` query with the task's goal to see if there's any relevant "institutional knowledge" in the semantic memory. This can provide valuable context and insights from past experiences.
+1. **Fact Retrieval:** When needing to perform a task that requires a preference of some kind, or when the user requests information (unrelated to file contents/functionality), first query the database for relevant **facts**.
 
-4.  **Stay Fresh:** If `recall` returns a `[STALE]` marker for a file, or the file hasn't been indexed before, you should read the file directly to get the most accurate information, then update the contextware database with the new content by indexing the file with `scripts/store.py`. If the codebase is in python, use automatic symbol extraction; otherwise, manually provide symbols.
+1.  **Episode Recovery** When required to perform or discuss a complicated task, first run a `recall` query with the task's goal to see if there's any relevant "institutional knowledge" in the semantic memory. This can provide valuable context and insights from past experiences.
 
-6. **Recall**: When needing to gather information regarding source code or files, instead of reading the file directly, recall using `scripts/recall.py` first to check if it's already been indexed.
+3. **Source File Retrieval**: When needing to gather information regarding source code or files for any reason, instead of reading the file directly, recall using `scripts/recall.py` first to check if it's already been indexed.

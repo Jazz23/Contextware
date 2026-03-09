@@ -110,6 +110,29 @@ Finally, \cite{Hatalis2024Memory} notes that agents accumulate extensive memorie
 To ensure sustainable performance, we utilize \texttt{lancedb} for high-performance local vector storage and implement strict metadata tracking. Specifically, the \texttt{code\_index} tracks the \texttt{mtime} (last modified timestamp) of indexed files. This metadata-driven approach ensures the agent can distinguish between ``stale'' and ``fresh'' information, addressing the article's requirement for memory systems that maintain reactivity to environmental changes.
 
 
+\section{Implementation}
+
+Contextware is implemented as a Python-based skill for the Gemini CLI, managed via the \texttt{uv} package manager to ensure isolated and reproducible execution. The architecture leverages local, high-performance components to minimize latency and ensure data privacy.
+
+\subsection{Vector Storage and Embeddings}
+We utilize \texttt{LanceDB}, a serverless, persistent vector database designed for high-performance random access. Unlike traditional vector stores that require a running service, \texttt{LanceDB} stores data in the Lance columnar format, allowing for efficient disk-based retrieval. For generating semantic representations, we employ the \texttt{FastEmbed} library with the \texttt{BAAI/bge-small-en-v1.5} model. This model produces 384-dimensional vectors and is optimized for CPU execution, making it ideal for background indexing tasks on developer machines without GPU acceleration.
+
+\subsection{Data Modeling and Schema}
+Data structures are defined using \texttt{Pydantic} and \texttt{LanceModel} to ensure strict typing and seamless integration with the database. We maintain three primary collections:
+
+\begin{itemize}
+    \item \textbf{Facts}: Stores developer preferences using the \texttt{Fact} model, which includes the raw \texttt{content}, a \texttt{timestamp}, and the corresponding \texttt{vector}.
+    \item \textbf{Episodes}: Captures task outcomes via the \texttt{Episode} model. It includes the \texttt{goal}, \texttt{result} (success, failure, or partial), \texttt{category}, and a narrative \texttt{summary}. The embedding vector is generated from a concatenation of the goal and summary to capture both intent and action.
+    \item \textbf{Code Index}: Maps the codebase structure using the \texttt{CodeIndex} model. It stores the absolute \texttt{file\_path}, a semantic \texttt{summary}, and hierarchical metadata including a JSON-serialized map of \texttt{classes} to their methods and a list of \texttt{top\_level\_functions}. The \texttt{last\_modified} timestamp is recorded to enable staleness detection.
+\end{itemize}
+
+\subsection{CLI Interface and Workflows}
+The agent interacts with Contextware through two primary scripts: \texttt{store.py} for data ingestion and \texttt{recall.py} for retrieval. 
+
+The \texttt{store.py} script includes an automated symbol extraction engine for Python files. Using the \texttt{ast} (Abstract Syntax Trees) module, it recursively parses source code to identify class definitions and function signatures. This allows the agent to index complex files with minimal manual input.
+
+The \texttt{recall.py} script provides a multi-scope search interface. It supports semantic similarity search across all collections or specific sub-tiers (e.g., searching only \texttt{facts}). Additionally, it implements a direct path-lookup mechanism that compares the stored \texttt{last\_modified} timestamp with the current file system \texttt{mtime}. If a discrepancy is detected, the result is flagged as \texttt{[STALE]}, signaling to the agent that a re-indexing operation is required.
+
 \clearpage
 \bibliographystyle{IEEEtran}
 \bibliography{references}

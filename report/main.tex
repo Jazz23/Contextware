@@ -112,7 +112,8 @@ To ensure sustainable performance, we utilize \texttt{lancedb} for high-performa
 
 \section{Implementation}
 
-Contextware is implemented as a Python-based skill for the Gemini CLI, managed via the \texttt{uv} package manager to ensure isolated and reproducible execution. The architecture leverages local, high-performance components to minimize latency and ensure data privacy.
+Contextware is implemented as a Python-based skill for the Gemini CLI, using \texttt{uv} to execute scripts with PEP 723 inline dependency metadata to ensure isolated and reproducible execution without a traditional virtual environment.
+ The architecture leverages local, high-performance components to minimize latency and ensure data privacy.
 
 \subsection{Vector Storage and Embeddings}
 We utilize \texttt{LanceDB}, a serverless, persistent vector database designed for high-performance random access. Unlike traditional vector stores that require a running service, \texttt{LanceDB} stores data in the Lance columnar format, allowing for efficient disk-based retrieval. For generating semantic representations, we employ the \texttt{FastEmbed} library with the \texttt{BAAI/bge-small-en-v1.5} model. This model produces 384-dimensional vectors and is optimized for CPU execution, making it ideal for background indexing tasks on developer machines without GPU acceleration.

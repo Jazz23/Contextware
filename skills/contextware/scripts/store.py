@@ -1,4 +1,13 @@
-import fire
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#   "fastembed>=0.7.4",
+#   "lancedb>=0.27.1",
+#   "pydantic>=2.12.5",
+# ]
+# ///
+
+import argparse
 import sys
 import os
 import time
@@ -9,6 +18,7 @@ import db
 import atexit
 import gc
 
+# (Keep all existing functions like _cleanup, get_embedding_model, extract_python_symbols, etc. as they are)
 # Initialize embedding model
 _embedding_model = None
 
@@ -92,7 +102,8 @@ def delete_fact(query: str):
 def store_episode(goal: str, result: str, category: str, summary: str):
     table = db.get_table("episodes")
     # For episodes, embed goal + summary
-    text_to_embed = f"Goal: {goal}\nSummary: {summary}"
+    text_to_embed = f"""Goal: {goal}
+Summary: {summary}"""
     embeddings = list(get_embedding_model().embed([text_to_embed]))
     vector = embeddings[0].tolist()
     
@@ -189,39 +200,54 @@ def delete_index(path: str):
         print(f"Error deleting index: {e}")
         sys.exit(1)
 
-def main(type: str, content: str = None, goal: str = None, result: str = None, category: str = None, path: str = None, classes: str = None, functions: str = None, delete: bool = False):
+
+def main():
+    parser = argparse.ArgumentParser(description="Contextware storage CLI")
+    parser.add_argument('--type', required=True, choices=['fact', 'episode', 'index'], help="The type of data to store.")
+    parser.add_argument('--content', default=None, help="The main text content.")
+    parser.add_argument('--goal', default=None, help="Goal for an episode.")
+    parser.add_argument('--result', default=None, help="Result of an episode.")
+    parser.add_argument('--category', default=None, help="Category of an episode.")
+    parser.add_argument('--path', default=None, help="File path for indexing.")
+    parser.add_argument('--classes', default=None, help="JSON string of classes and methods.")
+    parser.add_argument('--functions', default=None, help="Comma-separated list of functions.")
+    parser.add_argument('--delete', action='store_true', help="Flag to delete an entry.")
+
+    args = parser.parse_args()
+
     try:
-        # If content is not provided as an argument, check for piped input from stdin
+        content = args.content
         if content is None and not sys.stdin.isatty():
             stdin_content = sys.stdin.read().strip()
             if stdin_content:
                 content = stdin_content
 
-        if type == "fact":
+        if args.type == "fact":
             if not content:
                 print("Error: content is required for type 'fact'")
                 sys.exit(1)
-            if delete:
+            if args.delete:
                 delete_fact(content)
             else:
                 store_fact(content)
-        elif type == "episode":
+        elif args.type == "episode":
             summary = content
-            if delete:
-                if not goal:
+            if args.delete:
+                if not args.goal:
                     if summary:
                         delete_episode(summary)
                     else:
                         print("Error: goal or content (query) is required for type 'episode' deletion")
                         sys.exit(1)
                 else:
-                    delete_episode(goal)
+                    delete_episode(args.goal)
             else:
-                if not goal or not result or not category or not summary:
+                if not args.goal or not args.result or not args.category or not summary:
                     print("Error: goal, result, category, and summary (content) are required for type 'episode'")
                     sys.exit(1)
-                store_episode(goal, result, category, summary)
-        elif type == "index":
+                store_episode(args.goal, args.result, args.category, summary)
+        elif args.type == "index":
+            path = args.path
             if not path:
                 if content:
                     path = content
@@ -229,22 +255,21 @@ def main(type: str, content: str = None, goal: str = None, result: str = None, c
                     print("Error: path is required for type 'index'")
                     sys.exit(1)
             
-            if delete:
+            if args.delete:
                 delete_index(path)
             else:
                 summary_to_use = content if content != path else None
                 
-                # For manual entry, classes should be a JSON string like '{"MyClass": ["method1"]}'
-                class_dict = json.loads(classes) if classes else None
-                func_list = [f.strip() for f in functions.split(",")] if functions else None
+                class_dict = json.loads(args.classes) if args.classes else None
+                func_list = [f.strip() for f in args.functions.split(",")] if args.functions else None
                 
                 store_index(path, summary=summary_to_use, classes=class_dict, top_level_functions=func_list)
         else:
-            print(f"Unknown type: {type}")
+            print(f"Unknown type: {args.type}")
             sys.exit(1)
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    main()

@@ -6,7 +6,7 @@
 ## 2. Architecture
 The system is managed via **`uv`** and runs entirely locally.
 
-*   **Dependency Management:** `pyproject.toml` (managed by `uv`).
+*   **Dependency Management:** PEP 723 script metadata (managed by `uv`).
 *   **Database:** `lancedb` (Local Vector DB).
 *   **Embeddings:** `fastembed` (Local, CPU-friendly embeddings).
 *   **Storage Path:** `skills/contextware/data/contextware_db/`.

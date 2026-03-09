@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#   "lancedb>=0.27.1",
+#   "pydantic>=2.12.5",
+# ]
+# ///
+
 import lancedb
 import os
 from lancedb.pydantic import LanceModel, Vector

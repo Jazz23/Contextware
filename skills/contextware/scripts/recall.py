@@ -1,3 +1,13 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#   "fastembed>=0.7.4",
+#   "fire>=0.7.1",
+#   "lancedb>=0.27.1",
+#   "pydantic>=2.12.5",
+# ]
+# ///
+
 import fire
 import sys
 import os

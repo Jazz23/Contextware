@@ -1,0 +1,118 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{framed}
+\usepackage{enumerate}
+\usepackage{minted}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\usepackage[english]{babel}
+\usepackage[autostyle, english = american]{csquotes}
+\MakeOuterQuote{"}
+
+\begin{document}
+
+\title{Contextware: Semantic Memory for Autonomous Software Development Agents}
+
+\author{\IEEEauthorblockN{Justin Frauenhofer}
+\IEEEauthorblockA{\textit{Computer Science and Engineering} \\
+\textit{UC Santa Cruz}}
+\and
+\IEEEauthorblockN{Graeme Maclean}
+\IEEEauthorblockA{\textit{Computer Science and Engineering} \\
+\textit{UC Santa Cruz}}
+}
+
+\maketitle
+
+\begin{abstract}
+The integration of Large Language Models (LLMs) into software development workflows has significantly accelerated code generation and debugging; however, these
+  systems frequently suffer from "contextual amnesia"—the inability to retain architectural decisions, user preferences, and high-level design intent across
+  disconnected development sessions. This paper presents Contextware, a persistent semantic memory skill developed for the Gemini CLI that addresses these
+  limitations through a localized, three-tier memory architecture.
+
+
+  Contextware utilizes a local vector database (LanceDB) and CPU-efficient embeddings (FastEmbed) to manage three distinct data collections: a "Hippocampus" for
+  explicit developer facts and constraints, a "Diary" for historical conversation logs, and a "Map" for a semantically indexed codebase. A novel contribution of
+  this work is the implementation of an autonomous background indexing mechanism that employs "headless" agent instances to recursively summarize file purposes
+  and symbol structures without interrupting the primary developer workflow. By combining proactive memory capture with a robust Retrieval-Augmented Generation
+  (RAG) pipeline, Contextware enables CLI agents to maintain a consistent project "mental model," significantly reducing the need for manual context
+  re-provisioning. Preliminary results demonstrate that this architecture improves agent autonomy in complex refactoring tasks and ensures long-term adherence to
+  project-specific conventions, providing a scalable blueprint for more reliable autonomous engineering systems.
+
+
+  Keywords: Semantic Memory, Autonomous Agents, Software Engineering, Retrieval-Augmented Generation (RAG), Large Language Models, Vector Databases.
+\end{abstract}
+
+\section{Background}
+
+The emergence of Large Language Models (LLMs) has revolutionized the development of autonomous agents capable of interacting with dynamic environments and executing complex tasks. These agents are designed to improve themselves by exploring and learning from the real world, yet they face a fundamental constraint known as agent amnesia. This amnesia is primarily rooted in the fixed context windows inherent to Transformer architectures, where quadratic attention complexity limits the volume of information the model can process at any single moment. While recent advancements have extended context windows to millions of tokens, this approach remains inefficient for continuous interaction because it requires holding the entire historical context in memory, which is computationally expensive and prone to failure when handling complex logic hidden in vast amounts of data.
+A critical phenomenon complicating long-context utilization is the lost in the middle problem, where attention mechanisms degrade for information buried in the center of long prompts, regardless of the model's theoretical context limit. Furthermore, as human-AI relationships develop over weeks or months, conversation history inevitably exceeds even the most generous context limits. Real-world interactions rarely maintain thematic continuity, meaning critical details like user preferences may be buried under thousands of tokens of unrelated discussion.
+To address these challenges, researchers have looked to cognitive psychology, particularly the Common Model of Cognition, to design multi-tiered memory systems. This framework distinguishes between several functional types: working memory, which serves as the agent's immediate reasoning workspace within the context window; episodic memory, which records specific temporally grounded experiences; semantic memory, which accumulates factual knowledge; and procedural memory, which stores skills and step-by-step guides. In a narrow sense, agent memory relates only to historical information within a single trial, but in a broad sense, it encompasses cross-trial information and external knowledge sources.
+The traditional solution for providing external knowledge is Retrieval-Augmented Generation (RAG), which leverages vector databases to supplement the model's prompt with relevant information. However, standard RAG is designed for static knowledge bases and often fails in dynamic conversational settings because it is stateless, relies on offline indexing, and focuses primarily on fact retrieval rather than the complex local-global reasoning inherent in dialog. This has led to the development of Memory-Augmented Generation (MAG), a paradigm focused on the autonomous self-organization of an agent's lived experience into optimized representations.
+The linear growth of stored history in MAG systems introduces the problem of memory inflation, where accumulating dialog history and tool responses rapidly consume the context window and increase token costs. This can lead to contextual degradation, where the agent forgets previous constraints or contradicts its own decisions. Furthermore, indiscriminate memory storage causes self-degradation through error propagation and misaligned experience replay. To maintain a lean and high-quality knowledge base, efficient agents must implement mechanisms for active forgetting or intelligent decay, inspired by the biological principle that memories are actively removed or modified based on recency and relevance.
+Memory can be represented in either textual or parametric forms. Textual memory offers better interpretability and easier implementation but is constrained by token limits. Parametric memory, which encodes information directly into model parameters through fine-tuning or knowledge editing, has higher information density and is not limited by prompt length but suffers from information loss and the risk of catastrophic forgetting. Balancing these forms is essential for building agents that can evolve and maintain coherence over their entire life cycle.
+
+\section{Relevant Works, Architectural Paradigms, and Project Takeaways}
+Current research has transitioned from linear text logs to structured and proactive memory management architectures.
+\subsection{Structural Paradigms: Graphs and Hierarchies}
+Several recent works emphasize the importance of structured representation for complex reasoning. AriGraph integrates semantic factual triplets and episodic experience edges within a world model graph, significantly improving spatial orientation and multi-hop reasoning in text-based environments. Mem0 and its variant Mem0g utilize graph-based representations to capture complex relational structures, achieving superior accuracy in temporal and open-domain tasks compared to unstructured memory. A-MEM draws inspiration from the Zettelkasten method, using interconnected atomic notes that evolve over time as new memories are integrated, allowing the system to refine its contextual understanding.
+Other architectures utilize principles from computer operating systems. MemoryOS introduces a three-tier storage hierarchy comprising short-term, mid-term, and long-term personal memory. It employs segmented paging and heat-based eviction strategies based on access frequency and recency, demonstrating that mid-term topic summaries have the highest impact on maintaining dialogue coherence. MemGPT also treats memory like an operating system, using hierarchical tiers and self-directed function calls to page information in and out of the limited context window.
+\subsection{Proactive Learning and Multimodal Integration}
+Moving beyond passive extraction, Nemori introduces the Predict-Calibrate Principle, where the agent forecasts its own experience and only distills new knowledge from the surprise or prediction gap against the raw interaction. MemInsight autonomously mines and prioritizes semantic attributes like user intent and emotion, which significantly improves recall compared to raw text similarity. For multimodal contexts, MIRIX manages memory across six specialized components, including a secure Knowledge Vault for verbatim sensitive data and a Resource Memory for full documents, and can process thousands of screenshots to build a visual activity history.
+\subsection{Key Design Takeaways for the Project}
+The following insights from the research are critical for implementing an efficient agent memory:
+
+    Segregation of Memory Types: Procedural, episodic, and semantic memories should be stored in separate structures to prevent internal contradictions and improve retrieval precision.
+    Intelligent Decay Mechanism: A utility score based on recency, relevance, and user feedback must be implemented to prune irrelevant information and avoid performance decline caused by catastrophic interference.
+    Active Retrieval: Instead of waiting for explicit triggers, the agent should self-generate a current topic to search memory proactively, preventing it from defaulting to outdated internal knowledge.
+    Human-in-the-Loop Transparency: Providing a visual interface where users can pin important facts or delete flawed memories enhances reliability and user trust, particularly in business processes.
+    Semantic Attribute Mining: Annotating raw data with autonomously mined attributes is more effective than relying solely on raw text embeddings for retrieval.
+
+\section{Integration of Memory Architecture Insights}
+
+Our project, \textbf{Contextware}, is explicitly designed to address key limitations in current LLM agent memory management as identified by Hatalis et al. \cite{Hatalis2024Memory}. The article highlights several critical challenges in the development of autonomous agents that we have directly incorporated into our architectural design.
+
+\subsection{Separation of Memory Types}
+Hatalis et al. identify the lack of ``separation between types of memories'' as a fundamental problem, noting that agents often fail when procedural, episodic, and semantic memories are conflated in a single vector space \cite{Hatalis2024Memory}. To resolve this, Contextware implements three distinct collections within our local vector database:
+
+\begin{itemize}
+    \item \texttt{facts} (Semantic Memory): Stores explicit user preferences and constraints.
+    \item \texttt{episodes} (Episodic Memory): Records the outcomes of specific tasks.
+    \item \texttt{code\_index} (Procedural Memory): Maps the codebase structure and symbols.
+\end{itemize}
+
+This distinct separation ensures that a user preference stored in \texttt{facts} does not compete with a past debugging attempt stored in \texttt{episodes} during vector retrieval, preventing the ``poor retrieval'' issues cited in the article.
+
+\subsection{Mitigating Infinite Subtask Loops}
+A significant reliability issue raised in the study is the ``Infinite subtask loop,'' where agents repeatedly fail at the same task because they do not ``detect if failures are reoccurring'' \cite{Hatalis2024Memory}. 
+
+We address this by introducing the \texttt{episodes} collection, which specifically records the \texttt{goal}, \texttt{result} (success/failure), and a \texttt{summary} of actions taken. The retrieval workflow in \texttt{recall.py} is designed to query this ``Black Box'' before the agent attempts a logical task. This allows the agent to recognize past failures and adjust its strategy rather than repeating the same mistake, directly answering the article's call for memory systems that facilitate adaptation.
+
+\subsection{Scalable Procedural Memory}
+The article discusses the necessity for agents to leverage external knowledge sources and metadata to enhance code generation \cite{Hatalis2024Memory}. 
+
+Contextware solves the problem of fixed-size context windows by using background ``headless'' Gemini instances to generate summaries and symbol maps for the \texttt{code\_index}. This creates a semantic map of the project, allowing the agent to perform broad searches over the entire file structure without loading every file into its immediate context.
+
+\subsection{Lifelong Memory Management}
+Finally, \cite{Hatalis2024Memory} notes that agents accumulate extensive memories over time, leading to issues with ``indexing, scaling, and metadata-filtered queries.'' 
+
+To ensure sustainable performance, we utilize \texttt{lancedb} for high-performance local vector storage and implement strict metadata tracking. Specifically, the \texttt{code\_index} tracks the \texttt{mtime} (last modified timestamp) of indexed files. This metadata-driven approach ensures the agent can distinguish between ``stale'' and ``fresh'' information, addressing the article's requirement for memory systems that maintain reactivity to environmental changes.
+
+
+\clearpage
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+
+\end{document}

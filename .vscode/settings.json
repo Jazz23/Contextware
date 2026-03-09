@@ -1,0 +1,31 @@
+{
+  "latex-workshop.latex.outDir": "out",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "docker-latexmk",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-v", "%DIR%:/workdir",
+        "-w", "/workdir",
+        "kjarosh/latex:2025.1",
+        "latexmk",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-pdf",
+        "-outdir=out", 
+        "%DOCFILE%.tex"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "Build with Docker (kjarosh 2025.1)",
+      "tools": [
+        "docker-latexmk"
+      ]
+    }
+  ]
+}

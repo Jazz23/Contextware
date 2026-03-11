@@ -17,7 +17,8 @@
 	"postCreateCommand": 
 	{
 		"gemini": "sudo chown -R vscode:vscode /home/vscode/.gemini",
-		"docker-latex": "docker image pull kjarosh/latex:2025.1"
+		"docker-latex": "docker image pull kjarosh/latex:2025.1",
+		"pip": "pip3 install --user -r requirements.txt"
 	},
 	"customizations": {
 		"vscode": {

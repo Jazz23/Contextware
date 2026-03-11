@@ -1,0 +1,3 @@
+[submodule "tests/SWE-bench"]
+	path = tests/SWE-bench
+	url = https://github.com/princeton-nlp/SWE-bench.git

@@ -25,6 +25,8 @@ description: Persistent, semantic memory for software development. Remembers pro
 
 3. **Index Files:** When you need to understand a file, first check it's indexed using `recall`. If the file is not in the database, or it comes up as [STALE], read the file yourself, extract relevant information/come up with a detailed summary, and store it in the database with `scripts/store.py`. **Crucially, after making *any* modifications to a file, you MUST re-index it** to ensure the database reflects the most current state. For Python files, use automatic symbol extraction; for other languages, provide symbols manually.
 
+    **CRITICAL**: When providing a summary for a file, do not include any special characters that can be interpreted by the shell, such as backticks (`), dollar signs ($), or quotes (" or '). Using these characters can lead to unexpected errors.
+
 ## Recall Instructions
 
 1. **Episode Recovery:** Before starting any new task, you MUST attempt to recall a relevant episode. Run a `recall` query with the task's goal to see if there's any relevant "institutional knowledge" in the semantic memory. This can provide valuable context and insights from past experiences.

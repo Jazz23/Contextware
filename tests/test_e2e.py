@@ -26,11 +26,12 @@ def setup_test_env(project_root, temp_dir, codebase_src):
         else:
             shutil.copy2(s, d)
             
-    # Copy skills/contextware to .temp/.gemini/skills/contextware
+    # Copy skills/contextware to .temp/.gemini/skills/contextware if it doesn't exist
     skill_src = os.path.join(project_root, "skills", "contextware")
     skill_dest = os.path.join(temp_dir, ".gemini", "skills", "contextware")
-    os.makedirs(os.path.dirname(skill_dest), exist_ok=True)
-    shutil.copytree(skill_src, skill_dest)
+    if not os.path.exists(skill_dest):
+        os.makedirs(os.path.dirname(skill_dest), exist_ok=True)
+        shutil.copytree(skill_src, skill_dest)
     
     print("Setup complete.")
     return skill_dest

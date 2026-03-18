@@ -1,0 +1,5 @@
+FROM headless-gemini:latest
+
+COPY skills/ /astropy/.gemini/skills/
+COPY skills/ /django/.gemini/skills/
+COPY skills/ /matplotlib/.gemini/skills/

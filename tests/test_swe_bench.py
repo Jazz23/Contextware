@@ -33,23 +33,16 @@ def main():
         "-w", f"/{repo}",
     ]
 
-    if args.contextware:
-        contextware_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "skills", "contextware"))
-        docker_run_cmd.extend([
-            "-v", f"{contextware_path}:/contextware:ro"
-        ])
-
     setup_cmds = f"git reset --hard {base_commit}"
-    if args.contextware:
-        setup_cmds = f"mkdir -p .gemini/skills && cp -r /contextware .gemini/skills/ && {setup_cmds}"
 
+    image_name = f"{'headless-gemini-contextware' if args.contextware else 'headless-gemini'}:latest"
     docker_run_cmd.extend([
-        "headless-gemini:latest",
+        image_name,
         "bash", "-c", f"{setup_cmds} && cat /prompt.txt | gemini -y && echo '---GIT_DIFF_START---' && git diff && echo '---GIT_DIFF_END---'"
     ])
 
     print(f"Running commands in container for instance {instance_id}...")
-    
+    print(docker_run_cmd)
     process = subprocess.Popen(
         docker_run_cmd,
         stdout=subprocess.PIPE,
@@ -82,11 +75,13 @@ def main():
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_dir, exist_ok=True)
     
-    output_file = os.path.join(output_dir, f"{instance_id}.json")
+    suffix = "-contextware" if args.contextware else ""
+    output_file = os.path.join(output_dir, f"{instance_id}{suffix}.json")
     
+    model_name = "headless-gemini-contextware" if args.contextware else "headless-gemini"
     output_data = {
         "instance_id": instance_id,
-        "model_name_or_path": "headless-gemini",
+        "model_name_or_path": model_name,
         "model_patch": patch_content
     }
 

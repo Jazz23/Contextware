@@ -1,0 +1,7 @@
+{
+  "first": {
+    "instance_id": "astropy__astropy-12907",
+    "model_name_or_path": "headless-gemini-contextware",
+    "model_patch": "diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\nindex a308e27297..45bea36085 100644\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -242,7 +242,7 @@ def _cstack(left, right):\n         cright = _coord_matrix(right, 'right', noutp)\n     else:\n         cright = np.zeros((noutp, right.shape[1]))\n-        cright[-right.shape[0]:, -right.shape[1]:] = 1\n+        cright[-right.shape[0]:, -right.shape[1]:] = right\n \n     return np.hstack([cleft, cright])\n \ndiff --git a/astropy/modeling/tests/test_separable.py b/astropy/modeling/tests/test_separable.py\nindex 8dfe5c8626..3faae90596 100644\n--- a/astropy/modeling/tests/test_separable.py\n+++ b/astropy/modeling/tests/test_separable.py\n@@ -148,3 +148,19 @@ def test_custom_model_separable():\n \n     assert not model_c().separable\n     assert np.all(separability_matrix(model_c()) == [True, True])\n+\n+\n+def test_separable_nested():\n+    sh1 = models.Shift(1)\n+    sh2 = models.Shift(2)\n+    rot = models.Rotation2D(2)\n+    cm = sh1 & sh2\n+    nested_model = rot & cm\n+    sm = separability_matrix(nested_model)\n+    expected = np.array([\n+        [True, True, False, False],\n+        [True, True, False, False],\n+        [False, False, True, False],\n+        [False, False, False, True]\n+    ])\n+    assert_allclose(sm, expected)\n"
+  }
+}

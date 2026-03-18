@@ -1,0 +1,73 @@
+2026-03-18 18:57:02,429 - INFO - Creating container for astropy__astropy-12907...
+2026-03-18 18:57:04,189 - INFO - Container for astropy__astropy-12907 created: 8128394383dbd20fdd3e5275cc00286d0d554348cb108c54c096786bbcd9d384
+2026-03-18 18:57:04,466 - INFO - Container for astropy__astropy-12907 started: 8128394383dbd20fdd3e5275cc00286d0d554348cb108c54c096786bbcd9d384
+2026-03-18 18:57:04,466 - INFO - Intermediate patch for astropy__astropy-12907 written to logs/run_evaluation/astropy__astropy-12907-contextware/headless-gemini-contextware/astropy__astropy-12907/patch.diff, now applying to container...
+2026-03-18 18:57:04,541 - INFO - >>>>> Applied Patch:
+Checking patch astropy/modeling/separable.py...
+Checking patch astropy/modeling/tests/test_separable.py...
+Applied patch astropy/modeling/separable.py cleanly.
+Applied patch astropy/modeling/tests/test_separable.py cleanly.
+
+2026-03-18 18:57:04,875 - INFO - Git diff before:
+diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py
+index a308e2729..45bea3608 100644
+--- a/astropy/modeling/separable.py
++++ b/astropy/modeling/separable.py
+@@ -242,7 +242,7 @@ def _cstack(left, right):
+         cright = _coord_matrix(right, 'right', noutp)
+     else:
+         cright = np.zeros((noutp, right.shape[1]))
+-        cright[-right.shape[0]:, -right.shape[1]:] = 1
++        cright[-right.shape[0]:, -right.shape[1]:] = right
+ 
+     return np.hstack([cleft, cright])
+ 
+diff --git a/astropy/modeling/tests/test_separable.py b/astropy/modeling/tests/test_separable.py
+index 8dfe5c862..3faae9059 100644
+--- a/astropy/modeling/tests/test_separable.py
++++ b/astropy/modeling/tests/test_separable.py
+@@ -148,3 +148,19 @@ def test_custom_model_separable():
+ 
+     assert not model_c().separable
+     assert np.all(separability_matrix(model_c()) == [True, True])
++
++
++def test_separable_nested():
++    sh1 = models.Shift(1)
++    sh2 = models.Shift(2)
++    rot = models.Rotation2D(2)
++    cm = sh1 & sh2
++    nested_model = rot & cm
++    sm = separability_matrix(nested_model)
++    expected = np.array([
++        [True, True, False, False],
++        [True, True, False, False],
++        [False, False, True, False],
++        [False, False, False, True]
++    ])
++    assert_allclose(sm, expected)
+2026-03-18 18:57:04,875 - INFO - Eval script for astropy__astropy-12907 written to logs/run_evaluation/astropy__astropy-12907-contextware/headless-gemini-contextware/astropy__astropy-12907/eval.sh; copying to container...
+2026-03-18 18:57:52,578 - INFO - Test runtime: 47.67 seconds
+2026-03-18 18:57:52,578 - INFO - Test output for astropy__astropy-12907 written to logs/run_evaluation/astropy__astropy-12907-contextware/headless-gemini-contextware/astropy__astropy-12907/test_output.txt
+2026-03-18 18:57:52,613 - INFO - Git diff after:
+diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py
+index a308e2729..45bea3608 100644
+--- a/astropy/modeling/separable.py
++++ b/astropy/modeling/separable.py
+@@ -242,7 +242,7 @@ def _cstack(left, right):
+         cright = _coord_matrix(right, 'right', noutp)
+     else:
+         cright = np.zeros((noutp, right.shape[1]))
+-        cright[-right.shape[0]:, -right.shape[1]:] = 1
++        cright[-right.shape[0]:, -right.shape[1]:] = right
+ 
+     return np.hstack([cleft, cright])
+2026-03-18 18:57:52,613 - INFO - Git diff changed after running eval script
+2026-03-18 18:57:52,613 - INFO - Grading answer for astropy__astropy-12907...
+2026-03-18 18:57:52,615 - INFO - report: {'astropy__astropy-12907': {'patch_is_None': False, 'patch_exists': True, 'patch_successfully_applied': True, 'resolved': True, 'tests_status': {'FAIL_TO_PASS': {'success': ['astropy/modeling/tests/test_separable.py::test_separable[compound_model6-result6]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model9-result9]'], 'failure': []}, 'PASS_TO_PASS': {'success': ['astropy/modeling/tests/test_separable.py::test_coord_matrix', 'astropy/modeling/tests/test_separable.py::test_cdot', 'astropy/modeling/tests/test_separable.py::test_cstack', 'astropy/modeling/tests/test_separable.py::test_arith_oper', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model0-result0]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model1-result1]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model2-result2]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model3-result3]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model4-result4]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model5-result5]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model7-result7]', 'astropy/modeling/tests/test_separable.py::test_separable[compound_model8-result8]', 'astropy/modeling/tests/test_separable.py::test_custom_model_separable'], 'failure': []}, 'FAIL_TO_FAIL': {'success': [], 'failure': []}, 'PASS_TO_FAIL': {'success': [], 'failure': []}}}}
+Result for astropy__astropy-12907: resolved: True
+2026-03-18 18:57:52,616 - INFO - Attempting to stop container sweb.eval.astropy__astropy-12907.astropy__astropy-12907-contextware...
+2026-03-18 18:58:07,854 - INFO - Attempting to remove container sweb.eval.astropy__astropy-12907.astropy__astropy-12907-contextware...
+2026-03-18 18:58:07,917 - INFO - Container sweb.eval.astropy__astropy-12907.astropy__astropy-12907-contextware removed.
+2026-03-18 18:58:07,918 - INFO - Attempting to remove image swebench/sweb.eval.x86_64.astropy_1776_astropy-12907:latest...
+2026-03-18 18:58:10,438 - INFO - Image swebench/sweb.eval.x86_64.astropy_1776_astropy-12907:latest removed.

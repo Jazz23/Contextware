@@ -1,0 +1,37 @@
+diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py
+index a308e27297..45bea36085 100644
+--- a/astropy/modeling/separable.py
++++ b/astropy/modeling/separable.py
+@@ -242,7 +242,7 @@ def _cstack(left, right):
+         cright = _coord_matrix(right, 'right', noutp)
+     else:
+         cright = np.zeros((noutp, right.shape[1]))
+-        cright[-right.shape[0]:, -right.shape[1]:] = 1
++        cright[-right.shape[0]:, -right.shape[1]:] = right
+ 
+     return np.hstack([cleft, cright])
+ 
+diff --git a/astropy/modeling/tests/test_separable.py b/astropy/modeling/tests/test_separable.py
+index 8dfe5c8626..3faae90596 100644
+--- a/astropy/modeling/tests/test_separable.py
++++ b/astropy/modeling/tests/test_separable.py
+@@ -148,3 +148,19 @@ def test_custom_model_separable():
+ 
+     assert not model_c().separable
+     assert np.all(separability_matrix(model_c()) == [True, True])
++
++
++def test_separable_nested():
++    sh1 = models.Shift(1)
++    sh2 = models.Shift(2)
++    rot = models.Rotation2D(2)
++    cm = sh1 & sh2
++    nested_model = rot & cm
++    sm = separability_matrix(nested_model)
++    expected = np.array([
++        [True, True, False, False],
++        [True, True, False, False],
++        [False, False, True, False],
++        [False, False, False, True]
++    ])
++    assert_allclose(sm, expected)

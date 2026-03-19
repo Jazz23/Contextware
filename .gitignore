@@ -1,5 +1,6 @@
 .venv
 .temp
+.temp copy
 __pycache__
 contextware_db
 report/out

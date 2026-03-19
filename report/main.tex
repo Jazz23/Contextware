@@ -220,6 +220,21 @@ As shown in Table \ref{tab:swe-bench}, both the Baseline and Contextware-augment
 
 The successful resolution of the task by the Contextware-augmented agent confirms that the integration of the memory lifecycle—including vector search, staleness detection, and symbol navigation—does not interfere with the model's core reasoning or code generation performance. This "non-interference" is a critical baseline for deploying persistent memory in production environments, as it ensures that the benefits of long-term context (such as architectural awareness and preference retention) do not come at the cost of immediate task accuracy.
 
+\subsection{Contextware Resource Efficiency Testing}
+To evaluate the impact of persistent semantic memory on the operational overhead of autonomous agents, we developed a comparative testing methodology focused on total token consumption and API request frequency. This study aims to quantify the "Contextual Re-provisioning" savings achieved by utilizing the Contextware Map and Hippocampus compared to a standard, stateless agent workflow.
+
+The testing environment utilized a medium-scale synthetic codebase containing established architectural patterns and a suite of unit tests to verify that feature implementations did not introduce functional regressions. The experimental protocol was structured as follows:
+
+\begin{enumerate}
+    \item \textbf{Setup and Indexing:} Two identical versions of the codebase were prepared. The experimental version was augmented with the Contextware skill and underwent a one-time autonomous indexing process to generate the project's semantic "Map." This indexed state served as the baseline for all subsequent tasks to reflect real-world usage where indexing is a non-recurring overhead.
+    \item \textbf{Isolated Environment Deployment:} Both the baseline (stateless) and Contextware-augmented codebases were deployed into isolated temporary directories to ensure a controlled environment for the duration of the test.
+    \item \textbf{Iterative Feature Implementation:} An instance of the Gemini CLI was initialized in both environments. A sequence of four relatively large, interrelated feature implementation tasks was assigned to both instances. For the Contextware-augmented agent, the skill was activated at the start of each task.
+    \item \textbf{Context Reset Protocol:} To simulate the start of a fresh development session and test long-term retention, the conversation context was programmatically cleared after the successful implementation of each feature. This forced the stateless agent to re-discover the repository's structure and state for each new sub-task, while the Contextware agent relied on its persistent memory to retrieve relevant architectural context.
+    \item \textbf{Comparison Metrics:} The total token count (input and output) and the total number of API requests were tallied and compared for both instances across the entire lifecycle of the four features. 
+\end{enumerate}
+
+This comparative methodology isolates the efficiency gains provided by the "summary-first" retrieval and structural symbol navigation, determining if the upfront cost of indexing is offset by reduced token inflation in subsequent developer sessions.
+
 \section{Analysis}
 
 \section{Future Directions}

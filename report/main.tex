@@ -235,7 +235,31 @@ The testing environment utilized a medium-scale synthetic codebase containing es
 
 This comparative methodology isolates the efficiency gains provided by the "summary-first" retrieval and structural symbol navigation, determining if the upfront cost of indexing is offset by reduced token inflation in subsequent developer sessions.
 
-\section{Analysis}
+\subsection{Efficiency Results}
+The results of the comparative testing are summarized in Table \ref{tab:efficiency}. Our measurements show that the Contextware-augmented agent utilized 473,129 tokens over 118 requests, while the baseline stateless agent used 216,727 tokens over 75 requests. 
+
+\begin{table}[htbp]
+    \centering
+    \caption{Token and Request Efficiency Comparison}
+    \label{tab:efficiency}
+    \begin{tabular}{|l|c|c|}
+        \hline
+        \textbf{Metric} & \textbf{Baseline (Stateless)} & \textbf{Contextware-Augmented} \\ \hline
+        Total Token Usage & 216,727 & 473,129 \\ \hline
+        Total Request Count & 75 & 118 \\ \hline
+    \end{tabular}
+\end{table}
+
+\section{Analysis and Limitations}
+The integration of Contextware into the Gemini CLI provides the foundation for persistent repository memory; however, our evaluation also revealed critical operational and economic trade-offs that must be addressed in future iterations.
+
+\subsection{Gemini CLI and API Quota Limitations}
+During our evaluation, we encountered significant limitations regarding the Gemini CLI's interaction with the underlying model APIs. Specifically, the restrictive daily API quota for the Gemini model frequently halted testing during large-scale, multi-turn benchmarks. This constraint resulted in the collection of only a single comprehensive data point for token measurement, as repeated runs consistently exceeded the available request limits. This "quota ceiling" highlights a fundamental challenge for autonomous development agents: the need for high-frequency, long-duration sessions often conflicts with the economic and operational limits of current API providers.
+
+\subsection{Architectural Trade-offs in Token Consumption}
+Contrary to our initial hypothesis that semantic retrieval would reduce token overhead by narrowing the agent's focus, the Contextware-augmented agent exhibited higher token usage and a greater number of API requests. Analysis of the agent's behavior indicates that this increase is primarily a side-effect of the Gemini CLI's internal tool architecture. Specifically, the \texttt{replace} tool used by the agent to make code modifications requires the original source code of a file to perform surgical edits. 
+
+Consequently, even when Contextware allows the agent to precisely locate the relevant files through semantic search, the agent must still perform full-file reads to facilitate the code changes. This "read-before-modify" requirement effectively mandates high-volume token transfers for every task, regardless of how accurately the agent "remembers" the project structure. These findings suggest that the benefits of semantic memory for agents are currently offset by the necessity for full-file context during the editing phase, and future improvements should focus on more granular tool-based modifications that do not require redundant reads of large source files.
 
 \section{Future Directions}
 While Contextware provides a robust foundation for persistent agent memory, several promising avenues for future research remain.
